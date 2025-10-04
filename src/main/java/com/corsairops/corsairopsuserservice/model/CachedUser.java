@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 
-@RedisHash("users")
+@RedisHash(value = "users", timeToLive = 3600) // 1 hour TTL
 @Data
 @AllArgsConstructor @NoArgsConstructor @Builder
 public class CachedUser {
