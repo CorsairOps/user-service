@@ -107,6 +107,45 @@ public class UserService {
         }
     }
 
+    public User getUserById(String id) {
+        try {
+            try {
+                return getCachedUsersByIds(Set.of(id)).stream()
+                        .findFirst()
+                        .map(this::mapToUser)
+                        .orElse(null);
+            } catch (Exception e) {
+                log.error("Error accessing cache: {}", e.getMessage(), e);
+            }
+            ListUsersResponse response = listUserById(id);
+            List<User> users = response.users().stream()
+                    .filter(userType -> id.equals(getAttributeValue(userType, "sub")))
+                    .map(this::mapToUser)
+                    .toList();
+            if (!users.isEmpty()) {
+                cacheUsers(users);
+                return users.getFirst();
+            }
+
+            throw new HttpResponseException("User not found", HttpStatus.NOT_FOUND);
+        } catch (AwsServiceException e) {
+            throw new HttpResponseException(e.awsErrorDetails().errorMessage(), HttpStatus.valueOf(e.statusCode()));
+        } catch (SdkClientException e) {
+            log.error(e.getMessage(), e);
+            throw new HttpResponseException("Service unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        }
+    }
+
+    private ListUsersResponse listUserById(String id) {
+        ListUsersRequest listUsersRequest = ListUsersRequest.builder()
+                .userPoolId(userPoolId)
+                .filter("sub=\"" + id + "\"")
+                .attributesToGet("sub", "email", "given_name", "family_name", "gender")
+                .build();
+
+        return cognitoClient.listUsers(listUsersRequest);
+    }
+
     private ListUsersResponse listAllUsers() throws AwsServiceException, SdkClientException {
         ListUsersRequest listUsersRequest = ListUsersRequest.builder()
                 .userPoolId(userPoolId)
@@ -137,7 +176,6 @@ public class UserService {
     }
 
     private User mapToUser(UserType userType) {
-        System.out.println(userType.toString());
         String id = getAttributeValue(userType, "sub");
         String email = getAttributeValue(userType, "email");
         String givenName = getAttributeValue(userType, "given_name");
