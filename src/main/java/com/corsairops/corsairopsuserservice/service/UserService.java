@@ -109,14 +109,15 @@ public class UserService {
 
     public User getUserById(String id) {
         try {
-            try {
-                return getCachedUsersByIds(Set.of(id)).stream()
-                        .findFirst()
-                        .map(this::mapToUser)
-                        .orElse(null);
-            } catch (Exception e) {
-                log.error("Error accessing cache: {}", e.getMessage(), e);
+            CachedUser cachedUser = cachedUserRepository.findById(id).orElse(null);
+            System.out.println(cachedUser);
+            if (cachedUser != null) {
+                log.info("Cache hit for user ID: {}", id);
+                return mapToUser(cachedUser);
+            } else {
+                log.info("Cache miss for user ID: {}", id);
             }
+
             ListUsersResponse response = listUserById(id);
             List<User> users = response.users().stream()
                     .filter(userType -> id.equals(getAttributeValue(userType, "sub")))
