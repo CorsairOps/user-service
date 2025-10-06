@@ -33,7 +33,8 @@ public class OpenAPIConfig {
     private Info info() {
         return new Info()
                 .title("User Service API")
-                .description("API documentation for the User Service");
+                .description("API documentation for the User Service")
+                .version("1.0.0");
     }
 
     private SecurityRequirement securityRequirement() {
