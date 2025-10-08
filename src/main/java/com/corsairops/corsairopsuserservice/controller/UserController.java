@@ -32,9 +32,9 @@ public class UserController {
     @CommonReadResponses
     @GetMapping("/ids")
     @ResponseStatus(OK)
-    public List<User> getUsersByIds(@RequestParam String ids) {
+    public List<User> getUsersByIds(@RequestParam String ids, @RequestParam(defaultValue = "false") boolean allowEmpty) {
         Set<String> idSet = Set.of(ids.split(","));
-        return userService.getUsersByIds(idSet);
+        return userService.getUsersByIds(idSet, allowEmpty);
     }
 
     @Operation(summary = "Get a user by ID")

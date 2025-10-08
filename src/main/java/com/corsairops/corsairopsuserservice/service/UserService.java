@@ -13,6 +13,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Slf4j
@@ -64,7 +65,7 @@ public class UserService {
         }
     }
 
-    public List<User> getUsersByIds(Set<String> userIds) {
+    public List<User> getUsersByIds(Set<String> userIds, boolean allowEmpty) {
         try {
             verifyAuthenticated();
             return userIds.parallelStream()
@@ -74,6 +75,9 @@ public class UserService {
                         } catch (WebClientResponseException e) {
                             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
                                 log.warn("User with ID {} not found", id);
+                                if (allowEmpty) {
+                                    return null;
+                                }
                                 throw new HttpResponseException("User with ID " + id + " not found", HttpStatus.NOT_FOUND);
                             } else {
                                 log.error("Error fetching user by ID {}: {}", id, e.getMessage());
@@ -81,6 +85,7 @@ public class UserService {
                             throw e;
                         }
                     })
+                    .filter(Objects::nonNull)
                     .toList();
         } catch (WebClientResponseException e) {
             log.error("Error fetching users by IDs: {}", e.getMessage());
