@@ -20,6 +20,14 @@ import static org.springframework.http.HttpStatus.OK;
 public class UserController {
     private final UserService userService;
 
+    @Operation(summary = "Get the authenticated user based on X-User-Id header")
+    @CommonReadResponses
+    @GetMapping("/auth")
+    @ResponseStatus(OK)
+    public User getAuthUser(@RequestHeader("X-User-Id") String userId) {
+        return userService.getUserById(userId);
+    }
+
     @Operation(summary = "Get all users")
     @CommonReadResponses
     @GetMapping
