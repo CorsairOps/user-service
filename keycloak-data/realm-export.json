@@ -116,6 +116,15 @@
         "attributes": {}
       },
       {
+        "id": "6eba09a4-ce8a-45ca-bef1-cc094c52937d",
+        "name": "ANALYST",
+        "description": "",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "19e4d8cc-44e4-457c-9672-ca295b21f62d",
+        "attributes": {}
+      },
+      {
         "id": "ab226244-b55b-4c51-8e85-f8ac8599a142",
         "name": "TECHNICIAN",
         "description": "",
@@ -249,16 +258,16 @@
                 "view-authorization",
                 "manage-events",
                 "view-identity-providers",
-                "impersonation",
                 "manage-authorization",
+                "impersonation",
                 "query-clients",
                 "query-realms",
                 "manage-clients",
                 "create-client",
-                "query-users",
                 "view-users",
-                "manage-identity-providers",
+                "query-users",
                 "view-realm",
+                "manage-identity-providers",
                 "view-events",
                 "view-clients"
               ]
