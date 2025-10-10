@@ -67,6 +67,13 @@ public class UserService {
 
     public List<User> getUsersByIds(Set<String> userIds, boolean allowEmpty) {
         try {
+            if (userIds == null || userIds.isEmpty()) {
+                if (allowEmpty) {
+                    return List.of();
+                } else {
+                    throw new HttpResponseException("No user IDs provided", HttpStatus.BAD_REQUEST);
+                }
+            }
             verifyAuthenticated();
             return userIds.parallelStream()
                     .map(id -> {
