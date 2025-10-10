@@ -1,17 +1,18 @@
 package com.corsairops.corsairopsuserservice.service;
 
-import com.corsairops.corsairopsuserservice.client.AuthServiceClient;
 import com.corsairops.corsairopsuserservice.config.AuthServiceProperties;
-import com.corsairops.corsairopsuserservice.dto.authservice.AuthenticateResponse;
 import com.corsairops.shared.dto.User;
 import com.corsairops.shared.exception.HttpResponseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -20,88 +21,124 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    private final AuthServiceClient authServiceClient;
     private final AuthServiceProperties authServiceProperties;
-
-    private LocalDateTime tokenExpiryTime;
-    private String bearerToken;
-
-    private void authenticate() {
-        AuthenticateResponse response = authServiceClient.authenticate(authServiceProperties.getRealm(),
-                "client_credentials",
-                authServiceProperties.getClientId(),
-                authServiceProperties.getClientSecret());
-        this.tokenExpiryTime = LocalDateTime.now().plusSeconds(Long.parseLong(response.expires_in()));
-        this.bearerToken = "Bearer " + response.access_token();
-    }
-
-    private void verifyAuthenticated() {
-        if (bearerToken == null || bearerToken.isBlank() || LocalDateTime.now().isAfter(tokenExpiryTime)) {
-            log.info("Access token is missing or expired. Authenticating...");
-            authenticate();
-        }
-    }
+    private final Keycloak keycloak;
 
     public List<User> getAllUsers() {
         try {
-            verifyAuthenticated();
-            return authServiceClient.getAllUsers(bearerToken, authServiceProperties.getRealm());
-        } catch (WebClientResponseException e) {
+            RealmResource realmResource = keycloak.realm(authServiceProperties.getRealm());
+            List<UserRepresentation> userRepresentations = realmResource.users().list();
+            List<User> users = new ArrayList<>();
+            for (UserRepresentation userRep : userRepresentations) {
+                List<RoleRepresentation> roles = getUserRealmRoles(realmResource, userRep.getId());
+                List<String> roleNames = extractRoleNames(roles);
+                users.add(new User(
+                        userRep.getId(),
+                        userRep.getUsername(),
+                        userRep.getEmail(),
+                        userRep.getFirstName(),
+                        userRep.getLastName(),
+                        userRep.isEnabled(),
+                        userRep.getCreatedTimestamp(),
+                        roleNames
+                ));
+            }
+            return users;
+        } catch (Exception e) {
             log.error("Error fetching all users: {}", e.getMessage());
             throw new HttpResponseException("User Service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
         }
     }
 
+
     public User getUserById(String userId) {
         try {
-            verifyAuthenticated();
-            return authServiceClient.getUserById(bearerToken, authServiceProperties.getRealm(), userId);
-        } catch (WebClientResponseException e) {
-            log.error("Error fetching user by ID: {}", e.getMessage());
-            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+            UserRepresentation userRep = keycloak.realm(authServiceProperties.getRealm())
+                    .users()
+                    .get(userId)
+                    .toRepresentation();
+
+            if (userRep == null) {
                 throw new HttpResponseException("User not found", HttpStatus.NOT_FOUND);
             }
+
+            List<RoleRepresentation> roles = getUserRealmRoles(keycloak.realm(authServiceProperties.getRealm()), userId);
+            List<String> roleNames = extractRoleNames(roles);
+            return new User(
+                    userRep.getId(),
+                    userRep.getUsername(),
+                    userRep.getEmail(),
+                    userRep.getFirstName(),
+                    userRep.getLastName(),
+                    userRep.isEnabled(),
+                    userRep.getCreatedTimestamp(),
+                    roleNames
+            );
+        } catch (Exception e) {
+            log.error("Error fetching user by ID: {}", e.getMessage());
             throw new HttpResponseException("User Service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
         }
     }
 
     public List<User> getUsersByIds(Set<String> userIds, boolean allowEmpty) {
-        try {
-            if (userIds == null || userIds.isEmpty()) {
-                if (allowEmpty) {
-                    return List.of();
-                } else {
-                    throw new HttpResponseException("No user IDs provided", HttpStatus.BAD_REQUEST);
-                }
+        if (userIds == null || userIds.isEmpty()) {
+            if (allowEmpty) {
+                return List.of();
+            } else {
+                throw new HttpResponseException("No user IDs provided", HttpStatus.BAD_REQUEST);
             }
-            verifyAuthenticated();
-            return userIds.parallelStream()
-                    .map(id -> {
-                        try {
-                            return authServiceClient.getUserById(bearerToken, authServiceProperties.getRealm(), id);
-                        } catch (WebClientResponseException e) {
-                            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                                log.warn("User with ID {} not found", id);
-                                if (allowEmpty) {
-                                    return null;
-                                }
-                                throw new HttpResponseException("User with ID " + id + " not found", HttpStatus.NOT_FOUND);
-                            } else {
-                                log.error("Error fetching user by ID {}: {}", id, e.getMessage());
-                            }
-                            throw e;
-                        }
-                    })
-                    .filter(Objects::nonNull)
-                    .toList();
-        } catch (WebClientResponseException e) {
-            log.error("Error fetching users by IDs: {}", e.getMessage());
-            log.info(e.getResponseBodyAsString());
-            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                throw new HttpResponseException("One or more users not found", HttpStatus.NOT_FOUND);
-            }
-            throw new HttpResponseException("User Service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
         }
+
+        RealmResource realmResource = keycloak.realm(authServiceProperties.getRealm());
+        return userIds.parallelStream()
+                .map(id -> {
+                    try {
+                        UserRepresentation userRep = realmResource.users().get(id).toRepresentation();
+                        if (userRep == null) {
+                            if (allowEmpty) {
+                                return null;
+                            }
+                            throw new HttpResponseException("User with ID " + id + " not found", HttpStatus.NOT_FOUND);
+                        } else {
+                            List<RoleRepresentation> roles = getUserRealmRoles(realmResource, id);
+                            List<String> roleNames = extractRoleNames(roles);
+                            return new User(
+                                    userRep.getId(),
+                                    userRep.getUsername(),
+                                    userRep.getEmail(),
+                                    userRep.getFirstName(),
+                                    userRep.getLastName(),
+                                    userRep.isEnabled(),
+                                    userRep.getCreatedTimestamp(),
+                                    roleNames
+                            );
+                        }
+                    } catch (Exception e) {
+                        if (allowEmpty) {
+                            return null;
+                        }
+                        throw new HttpResponseException("User with ID " + id + " not found", HttpStatus.NOT_FOUND);
+                    }
+                })
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private List<String> extractRoleNames(List<RoleRepresentation> realmRoles) {
+        Set<String> validRoleNames = Set.of("ADMIN", "PLANNER", "OPERATOR", "TECHNICIAN", "ANALYST");
+        return realmRoles.stream()
+                .map(RoleRepresentation::getName)
+                .filter(validRoleNames::contains)
+                .toList();
+    }
+
+    private List<RoleRepresentation> getUserRealmRoles(RealmResource realmResource, String userId) {
+        return realmResource
+                .users()
+                .get(userId)
+                .roles()
+                .realmLevel()
+                .listAll();
     }
 
 }
