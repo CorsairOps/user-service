@@ -52,4 +52,12 @@ public class UserController {
     public User getUserById(@PathVariable String id) {
         return userService.getUserById(id);
     }
+
+    @Operation(summary = "Get count of all users")
+    @CommonReadResponses
+    @GetMapping("/count")
+    @ResponseStatus(OK)
+    public Integer getUserCount() {
+        return userService.getUserCount();
+    }
 }

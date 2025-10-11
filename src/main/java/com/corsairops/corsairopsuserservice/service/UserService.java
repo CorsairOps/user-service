@@ -124,6 +124,11 @@ public class UserService {
                 .toList();
     }
 
+    public Integer getUserCount() {
+        RealmResource realmResource = keycloak.realm(authServiceProperties.getRealm());
+        return realmResource.users().count();
+    }
+
     private List<String> extractRoleNames(List<RoleRepresentation> realmRoles) {
         Set<String> validRoleNames = Set.of("ADMIN", "PLANNER", "OPERATOR", "TECHNICIAN", "ANALYST");
         return realmRoles.stream()
