@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.corsairops</groupId>
-    <artifactId>corsairops-user-service</artifactId>
+    <artifactId>user-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>corsairops-user-service</name>
     <description>corsairops-user-service</description>
@@ -47,7 +47,7 @@
         </dependency>
         <dependency>
             <groupId>com.corsairops</groupId>
-            <artifactId>corsairops-shared</artifactId>
+            <artifactId>shared</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
