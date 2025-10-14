@@ -134,6 +134,15 @@
         "attributes": {}
       },
       {
+        "id": "1cd0c5ec-5313-49ed-a820-18d7e2d6084e",
+        "name": "IOT_DEVICE",
+        "description": "",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "19e4d8cc-44e4-457c-9672-ca295b21f62d",
+        "attributes": {}
+      },
+      {
         "id": "bad3ab54-ce35-4dc7-ac3a-ad358291887b",
         "name": "uma_authorization",
         "description": "${role_uma_authorization}",
@@ -358,6 +367,7 @@
       ],
       "security-admin-console": [],
       "admin-cli": [],
+      "asset-tracker-iot": [],
       "account-console": [],
       "user-service": [
         {
@@ -526,6 +536,23 @@
   "webAuthnPolicyPasswordlessAcceptableAaguids": [],
   "webAuthnPolicyPasswordlessExtraOrigins": [],
   "users": [
+    {
+      "id": "982ee562-11ef-4ed7-9dea-6a7bc29265a5",
+      "username": "service-account-asset-tracker-iot",
+      "emailVerified": false,
+      "enabled": true,
+      "createdTimestamp": 1760302952328,
+      "totp": false,
+      "serviceAccountClientId": "asset-tracker-iot",
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "realmRoles": [
+        "default-roles-corsairops",
+        "IOT_DEVICE"
+      ],
+      "notBefore": 0,
+      "groups": []
+    },
     {
       "id": "9a29abed-49f7-42c1-aebc-a9deadabc6e9",
       "username": "service-account-user-service",
@@ -721,6 +748,65 @@
       ]
     },
     {
+      "id": "c86264a3-19d3-448d-85f4-8bd9d8d5962d",
+      "clientId": "asset-tracker-iot",
+      "name": "",
+      "description": "",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "**********",
+      "redirectUris": [
+        "/*"
+      ],
+      "webOrigins": [
+        "/*"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "realm_client": "false",
+        "oidc.ciba.grant.enabled": "false",
+        "client.secret.creation.time": "1760302952",
+        "backchannel.logout.session.required": "true",
+        "standard.token.exchange.enabled": "false",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "backchannel.logout.revoke.offline.tokens": "false",
+        "dpop.bound.access.tokens": "false"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
+      "defaultClientScopes": [
+        "web-origins",
+        "service_account",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "organization",
+        "microprofile-jwt"
+      ]
+    },
+    {
       "id": "b30cf50b-fef9-4d8d-9305-292f70de38e7",
       "clientId": "broker",
       "name": "${client_broker}",
@@ -809,7 +895,7 @@
         "request.object.encryption.enc": "any",
         "dpop.bound.access.tokens": "false",
         "id.token.as.detached.signature": "false",
-        "client.secret.creation.time": "1759950780",
+        "client.secret.creation.time": "1760214637",
         "request.object.encryption.alg": "any",
         "client.introspection.response.allow.jwt.claim.enabled": "false",
         "standard.token.exchange.enabled": "false",
@@ -985,7 +1071,7 @@
       "attributes": {
         "realm_client": "false",
         "oidc.ciba.grant.enabled": "false",
-        "client.secret.creation.time": "1759952269",
+        "client.secret.creation.time": "1760214675",
         "backchannel.logout.session.required": "true",
         "standard.token.exchange.enabled": "false",
         "post.logout.redirect.uris": "+",
@@ -997,8 +1083,8 @@
       "fullScopeAllowed": true,
       "nodeReRegistrationTimeout": -1,
       "defaultClientScopes": [
-        "service_account",
         "web-origins",
+        "service_account",
         "acr",
         "profile",
         "roles",
@@ -1803,14 +1889,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "saml-user-attribute-mapper",
-            "oidc-usermodel-property-mapper",
-            "oidc-usermodel-attribute-mapper",
-            "oidc-sha256-pairwise-sub-mapper",
             "saml-role-list-mapper",
-            "saml-user-property-mapper",
+            "saml-user-attribute-mapper",
+            "oidc-usermodel-attribute-mapper",
             "oidc-full-name-mapper",
-            "oidc-address-mapper"
+            "oidc-usermodel-property-mapper",
+            "oidc-address-mapper",
+            "oidc-sha256-pairwise-sub-mapper",
+            "saml-user-property-mapper"
           ]
         }
       },
@@ -1842,14 +1928,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "oidc-address-mapper",
-            "oidc-usermodel-attribute-mapper",
-            "oidc-sha256-pairwise-sub-mapper",
-            "saml-user-property-mapper",
             "saml-role-list-mapper",
             "oidc-usermodel-property-mapper",
             "saml-user-attribute-mapper",
-            "oidc-full-name-mapper"
+            "oidc-address-mapper",
+            "saml-user-property-mapper",
+            "oidc-sha256-pairwise-sub-mapper",
+            "oidc-full-name-mapper",
+            "oidc-usermodel-attribute-mapper"
           ]
         }
       },
